@@ -33,3 +33,7 @@
 
 # This Project
 TVJ_Vector.cpp
+
+# Visual Studio Code
+.vscode/launch.json
+.vscode/tasks.json

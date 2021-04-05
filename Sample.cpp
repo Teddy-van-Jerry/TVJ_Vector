@@ -5,7 +5,7 @@
  *
  * @author: Teddy van Jerry
  * @licence: The MIT Licence
- * @compiler: at least C++/11 (tested on MSVC and MinGW)
+ * @compiler: at least C++/11 (tested on MSVC, MinGW and g++)
  *
  * @version 1.0 2021/03/24
  * - initial version

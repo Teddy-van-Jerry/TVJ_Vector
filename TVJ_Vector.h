@@ -4,7 +4,7 @@
  *
  * @author: Teddy van Jerry
  * @licence: The MIT Licence
- * @compiler: at least C++/11 (tested on MSVC and MinGW)
+ * @compiler: at least C++/11 (tested on MSVC, MinGW and g++)
  *
  * @version 1.2 2021/04/05
  * - bug fix
