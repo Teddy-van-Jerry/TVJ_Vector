@@ -6,6 +6,11 @@
  * @licence: The MIT Licence
  * @compiler: at least C++/11 (tested on MSVC and MinGW)
  *
+ * @version 1.2 2021/04/05
+ * - bug fix
+ * - change capacity_ to protected
+ * - add functions
+ * 
  * @version 1.1 2021/03/25
  * - bug fix in compatibility with MinGW
  * - bug fix in inheritance
@@ -14,6 +19,7 @@
  * - initial version
  *
  */
+
 #pragma once
 
 #include <stdexcept>
@@ -123,6 +129,7 @@ namespace tvj
     template<typename Elem>
     class vector
     {
+    protected:
         class const_iterator
         {
             friend class vector<Elem>;
@@ -262,8 +269,8 @@ namespace tvj
         const_iterator cback() const noexcept;
 
         /**
-         * brief: size
-         * param: the size of the container (i.e. the number of contents)
+         * brief: size, the size of the container (i.e. the number of contents)
+         * param: void
          * return: size_t
          */
         size_t size() const noexcept;
@@ -304,6 +311,13 @@ namespace tvj
         void insert_after(long long index, const Elem& value) noexcept;
 
         /**
+         * brief: push element at the back (same as push_back)
+         * param: the element
+         * return: void
+         */
+        void append(const Elem& value) noexcept;
+
+        /**
          * brief: remove element at a certain place
          * param: the index
          * return: void
@@ -316,6 +330,13 @@ namespace tvj
          * return: void
          */
         void clear() noexcept;
+
+        /**
+         * brief: if the vector is empty
+         * param: (void)
+         * return: bool
+         */
+        bool empty() noexcept;
 
         /**
          * brief: shrink, i.e. reduce the capacity
@@ -343,6 +364,20 @@ namespace tvj
          * param: size_t index
          * return: void
          */
+        const Elem& at(size_t index) const;
+
+        /**
+         * brief: the read-and-write version of the element
+         * param: size_t index
+         * return: void
+         */
+        Elem& at(size_t index);
+
+        /**
+         * brief: the read-only version of the element
+         * param: size_t index
+         * return: void
+         */
         const Elem& operator[](size_t index) const;
 
         /**
@@ -352,11 +387,27 @@ namespace tvj
          */
         Elem& operator[](size_t index);
 
+        /**
+         * brief: check if two vectors are the same
+         * param: another vector the same element type
+         * return: bool
+         */
+        bool operator==(const vector<Elem>& vec) const noexcept;
+
+        /**
+         * brief: check if two vectors are not the same
+         * param: another vector the same element type
+         * return: bool
+         */
+        bool operator!=(const vector<Elem>& vec) const noexcept;
+
     private:
-        Elem* vec;        // the dynamic array that stores elements
-        size_t capacity_; // the size of vec and should be always larger than size_ by at least 1
+        // the dynamic array that stores elements
+        Elem* vec;
 
     protected:
+        // the size of vec and should be always larger than size_ by at least 1
+        size_t capacity_;
 
         // the number of valid elements
         size_t size_;
@@ -528,7 +579,7 @@ namespace tvj
     }
 
     template<typename Elem>
-    vector<Elem>::iterator::iterator() { 	}
+    vector<Elem>::iterator::iterator() { }
 
     template<typename Elem>
     vector<Elem>::iterator::~iterator() { }
@@ -810,6 +861,12 @@ namespace tvj
     }
 
     template<typename Elem>
+    inline void vector<Elem>::append(const Elem& value) noexcept
+    {
+        this->push_back(value);
+    }
+
+    template<typename Elem>
     inline Elem vector<Elem>::remove_at(size_t index)
     {
 #ifndef NDEBUG
@@ -825,6 +882,12 @@ namespace tvj
     inline void vector<Elem>::clear() noexcept
     {
         size_ = 0;
+    }
+
+    template<typename Elem>
+    inline bool vector<Elem>::empty() noexcept
+    {
+        return !this->size_;
     }
 
     template<typename Elem>
@@ -856,10 +919,28 @@ namespace tvj
     }
 
     template<typename Elem>
+    inline const Elem& vector<Elem>::at(size_t index) const
+    {
+#ifndef NDEBUG
+        if (index > size_) error_info("Overflow in at of tvj::vector", TVJ_VECTOR_OVERFLOW);
+#endif
+        return vec[index];
+    }
+
+    template<typename Elem>
+    inline Elem& vector<Elem>::at(size_t index)
+    {
+#ifndef NDEBUG
+        if (index > size_) error_info("Overflow in at of tvj::vector", TVJ_VECTOR_OVERFLOW);
+#endif
+        return vec[index];
+    }
+
+    template<typename Elem>
     inline const Elem& vector<Elem>::operator[](size_t index) const
     {
 #ifndef NDEBUG
-        if (index > size_) error_info("Overflow in remove_at of tvj::vector", TVJ_VECTOR_OVERFLOW);
+        if (index > size_) error_info("Overflow in operator[] of tvj::vector", TVJ_VECTOR_OVERFLOW);
 #endif
         return vec[index];
     }
@@ -868,9 +949,26 @@ namespace tvj
     inline Elem& vector<Elem>::operator[](size_t index)
     {
 #ifndef NDEBUG
-        if (index > size_) error_info("Overflow in remove_at of tvj::vector", TVJ_VECTOR_OVERFLOW);
+        if (index > size_) error_info("Overflow in operator[] of tvj::vector", TVJ_VECTOR_OVERFLOW);
 #endif
         return vec[index];
+    }
+
+    template<typename Elem>
+    inline bool vector<Elem>::operator==(const vector<Elem>& another_vec) const noexcept
+    {
+        if (this->size_ != another_vec.size_) return false;
+        for (size_t i = 0; i != this->size_; i++)
+        {
+            if ((*this)[i] != another_vec[i]) return false;
+        }
+        return true;
+    }
+
+    template<typename Elem>
+    inline bool vector<Elem>::operator!=(const vector<Elem>& another_vec) const noexcept
+    {
+        return !(*this == another_vec);
     }
 
     template<typename Elem>
@@ -894,7 +992,7 @@ namespace tvj
     {
         if (distance == 0) return;
         if (distance > 0) // move right
-            for (size_t i = size_ + distance - 1; i != start_index; i--) vec[i] = vec[i - 1];
+            for (size_t i = size_ + distance - 1; i != start_index; i--) vec[i] = vec[i - distance];
         else // move left
             for (size_t i = start_index; i != size_; i++) vec[i + distance] = vec[i];
     }
